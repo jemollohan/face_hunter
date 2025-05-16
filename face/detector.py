@@ -50,8 +50,7 @@ def detect_persons(frame, detection_model):
     # Typically, you get boxes, classes, and scores.
     num_detections = int(detections.pop('num_detections'))
     # Squeeze the batch dimension and select up to num_detections
-    processed_detections = {key: value[0, :num_detections].numpy()
-                            for key, value in detections.items()}
+    processed_detections = {key: value[0, :num_detections].numpy() for key, value in detections.items()}
     processed_detections['num_detections'] = num_detections
     processed_detections['detection_classes'] = processed_detections['detection_classes'].astype(np.int64)
 

@@ -7,7 +7,7 @@ __pycache__/
 build/
 dist/
 env/
-venv/
+.venv/
 *.egg-info
 
 # OS-specific ignores (common)
@@ -19,3 +19,6 @@ Thumbs.db
 
 # Other common ignores
 *.logl
+
+#project ignores
+artifacts/
