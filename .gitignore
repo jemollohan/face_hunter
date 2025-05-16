@@ -1,0 +1,21 @@
+#Python Ignores
+__pycache__/
+*.pyc
+*.pyd
+.pytest_cache/
+.coverage
+build/
+dist/
+env/
+venv/
+*.egg-info
+
+# OS-specific ignores (common)
+.DS_Store
+Thumbs.db
+
+# IDE-specific ignores (example for VS Code)
+.vscode/
+
+# Other common ignores
+*.logl
