@@ -3,7 +3,11 @@ import tensorflow_hub as hub
 import cv2
 import numpy as np
 
-import frame_counter
+from frame_counter import FrameCounter
+from simple_logger import SimpleLogger
+
+logger = SimpleLogger("Detector.py")
+logger.add_stream_handler()
 
 # Load the model from TensorFlow Hub
 # You can find more models at https://tfhub.dev/s?module-type=image-object-detection
@@ -12,14 +16,17 @@ model_url = "https://www.kaggle.com/models/tensorflow/faster-rcnn-inception-resn
 # Or for potentially higher accuracy but slower speed:
 # model_url = "https://tfhub.dev/tensorflow/faster_rcnn/inception_resnet_v2_640x640/1"
 
-print(f"Loading model from {model_url}...")
-try:
-    model = hub.load(model_url)
-    print("Model loaded successfully!")
-except Exception as e:
-    print(f"Error loading model: {e}")
-    print("Please ensure you have an active internet connection if loading for the first time.")
-    exit()
+
+def load_model(model_url:str) -> None:
+    logger.info("Loading Model from [{}]...".format(model_url))
+    try:
+        model = hub.load(model_url)
+        logger.info("Model loaded successfully!")
+    except Exception as e:
+        logger.error(f"Error loading model: {e}")
+        logger.error("Please ensure you have an active internet connection if loading for the first time.")
+        exit()
+    return model
 
 # COCO class labels (MobileNet SSD is typically trained on COCO)
 # The model output will give class IDs. '1' usually corresponds to 'person'.
@@ -29,11 +36,7 @@ CONFIDENCE_THRESHOLD = 0.5 # Only detect persons with confidence > 50%
 
 
 
-
-
-
-
-def detect_persons(frame, detection_model):
+def detect(frame, detection_model):
     # Convert frame to RGB (OpenCV uses BGR by default)
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     # Convert to a TensorFlow tensor
@@ -92,7 +95,7 @@ def record_video(frame, video_writer=None):
 if __name__ == "__main__": # Placeholder for now, will integrate tracking later
     video_cap = get_video_input(0) # Use 0 for webcam, or path to video file
     counter = FrameCounter()
-    print("Initializing Writer...")
+    logger.debug("Initializing Writer...")
     # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Codec for .avi format
     video_writer = cv2.VideoWriter('output.avi', fourcc, 20.0, (640, 480)) # Output file name, codec, frames per second, frame size
@@ -101,7 +104,7 @@ if __name__ == "__main__": # Placeholder for now, will integrate tracking later
         while True:
             ret, frame = video_cap.read()
             if not ret:
-                print("Error: Failed to grab frame or end of video.")
+                logger.error("Error: Failed to grab frame or end of video.")
                 break
 
             counter.increment()
@@ -119,3 +122,4 @@ if __name__ == "__main__": # Placeholder for now, will integrate tracking later
         if video_writer:
             video_writer.release()
         cv2.destroyAllWindows()
+
