@@ -4,29 +4,9 @@ import cv2
 import numpy as np
 
 from frame_counter import FrameCounter
-from simple_logger import SimpleLogger
+from factory.logger_factory import get_logger
 
-logger = SimpleLogger("Detector.py")
-logger.add_stream_handler()
-
-# Load the model from TensorFlow Hub
-# You can find more models at https://tfhub.dev/s?module-type=image-object-detection
-# Example: SSD MobileNet V2 FPNLite 640x640
-model_url = "https://www.kaggle.com/models/tensorflow/faster-rcnn-inception-resnet-v2/TensorFlow2/640x640/1"
-# Or for potentially higher accuracy but slower speed:
-# model_url = "https://tfhub.dev/tensorflow/faster_rcnn/inception_resnet_v2_640x640/1"
-
-
-def load_model(model_url:str) -> None:
-    logger.info("Loading Model from [{}]...".format(model_url))
-    try:
-        model = hub.load(model_url)
-        logger.info("Model loaded successfully!")
-    except Exception as e:
-        logger.error(f"Error loading model: {e}")
-        logger.error("Please ensure you have an active internet connection if loading for the first time.")
-        exit()
-    return model
+logger = get_logger("detector")
 
 # COCO class labels (MobileNet SSD is typically trained on COCO)
 # The model output will give class IDs. '1' usually corresponds to 'person'.

@@ -1,6 +1,6 @@
 import cv2
 
-from simple_logger import SimpleLogger
+from factory.logger_factory import get_logger
 
 class VideoStreamer():
     def __init__(self, source=0):
@@ -8,10 +8,7 @@ class VideoStreamer():
         self._source = source
         self._publish_callback = []
         self._preprocess_callback = []
-        self._logger = SimpleLogger()
-        self._logger.add_stream_handler()
-
-
+        self._logger = get_logger("video_streamer")
 
     def get_video_input(self): # 0 for webcam, or provide a path to a video file
         cap = cv2.VideoCapture(self._source)
