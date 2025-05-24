@@ -14,42 +14,47 @@ logger = get_logger("detector")
 PERSON_CLASS_ID = 1
 CONFIDENCE_THRESHOLD = 0.5 # Only detect persons with confidence > 50%
 
-
+def convert_to_tensor(frame):
+    tensor = tf.convert_to_tensor(frame)
+    return tensor[tf.newaxis, ...]
 
 def detect(frame, detection_model):
-    # Convert frame to RGB (OpenCV uses BGR by default)
-    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    # Convert to a TensorFlow tensor
-    input_tensor = tf.convert_to_tensor(rgb_frame)
-    # Add a batch dimension
-    input_tensor = input_tensor[tf.newaxis, ...]
+
+    input_tensor = convert_to_tensor(frame)
 
     # Perform detection
     detections = detection_model(input_tensor)
+    return detections
 
+def extract_detections(detections):
     # Extract results
     # The output structure can vary slightly between models.
     # Refer to the model's documentation on TF Hub.
     # Typically, you get boxes, classes, and scores.
     num_detections = int(detections.pop('num_detections'))
+
     # Squeeze the batch dimension and select up to num_detections
     processed_detections = {key: value[0, :num_detections].numpy() for key, value in detections.items()}
     processed_detections['num_detections'] = num_detections
     processed_detections['detection_classes'] = processed_detections['detection_classes'].astype(np.int64)
+    
+    return processed_detections
+
+def get_bbox_score_list(detections, frame_width, frame_height):
 
     person_boxes = []
     person_scores = []
 
-    for i in range(len(processed_detections['detection_scores'])):
-        score = processed_detections['detection_scores'][i]
-        class_id = processed_detections['detection_classes'][i]
+    for i in range(len(detections['detection_scores'])):
+        score = detections['detection_scores'][i]
+        class_id = detections['detection_classes'][i]
 
         if class_id == PERSON_CLASS_ID and score > CONFIDENCE_THRESHOLD:
             # Bounding box coordinates are usually normalized (0.0 to 1.0)
             # Convert them to pixel coordinates
-            ymin, xmin, ymax, xmax = processed_detections['detection_boxes'][i]
-            (left, right, top, bottom) = (xmin * frame.shape[1], xmax * frame.shape[1],
-                                          ymin * frame.shape[0], ymax * frame.shape[0])
+            ymin, xmin, ymax, xmax = detections['detection_boxes'][i]
+            (left, right, top, bottom) = (xmin * frame_width, xmax * frame_width,
+                                          ymin * frame_height, ymax * frame_height)
             person_boxes.append([int(left), int(top), int(right-left), int(bottom-top)]) # x, y, w, h
             person_scores.append(float(score))
 
@@ -73,33 +78,5 @@ def record_video(frame, video_writer=None):
 
 # --- Main Loop for Detection Only (Phase 1) ---
 if __name__ == "__main__": # Placeholder for now, will integrate tracking later
-    video_cap = get_video_input(0) # Use 0 for webcam, or path to video file
-    counter = FrameCounter()
-    logger.debug("Initializing Writer...")
-    # Define the codec and create VideoWriter object
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Codec for .avi format
-    video_writer = cv2.VideoWriter('output.avi', fourcc, 20.0, (640, 480)) # Output file name, codec, frames per second, frame size
-
-    if video_cap:
-        while True:
-            ret, frame = video_cap.read()
-            if not ret:
-                logger.error("Error: Failed to grab frame or end of video.")
-                break
-
-            counter.increment()
-
-            person_boxes, person_scores = detect_persons(frame, model)
-            frame_with_detections = draw_detections(frame.copy(), person_boxes, person_scores, counter.get_fps())
-            record_video(frame, video_writer)
-
-            cv2.imshow("Person Detection", frame_with_detections)
-
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-
-        video_cap.release()
-        if video_writer:
-            video_writer.release()
-        cv2.destroyAllWindows()
+    pass
 
